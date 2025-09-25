@@ -23,13 +23,29 @@
 ## 파일 구조
 
 ```
-sound_play_pkg/
-  launch/sound_play.launch.py
-  sound_play_pkg/sound_play.py
-  sound/*.wav / *.mp3   (사운드 리소스)
-  resource/sound_play_pkg (ament 인덱스 마커)
-  package.xml
-  setup.py
+   sound_play_pkg
+    ├── README.md
+    ├── launch
+    │   └── sound_play.launch.py
+    ├── package.xml
+    ├── resource
+    │   └── sound_play_pkg
+    ├── setup.cfg
+    ├── setup.py
+    ├── sound
+    │   ├── idle.wav
+    │   ├── start.mp3
+    │   ├── stop.wav
+    │   ├── test_0.mp3
+    │   ├── tmp.mp3
+    │   └── warn.mp3
+    └── sound_play_pkg
+        ├── __init__.py
+        ├── __pycache__
+        │   ├── __init__.cpython-310.pyc
+        │   └── sound_play.cpython-310.pyc
+        └── sound_play.py
+
 ```
 
 ---
