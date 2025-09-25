@@ -20,7 +20,7 @@
 
 ---
 
-## 파일 구조
+## 파일 구조 예시
 
 ```
    sound_play_pkg
@@ -33,17 +33,15 @@
     ├── setup.cfg
     ├── setup.py
     ├── sound
-    │   ├── idle.wav
-    │   ├── start.mp3
-    │   ├── stop.wav
     │   ├── test_0.mp3
-    │   ├── tmp.mp3
-    │   └── warn.mp3
+    │   ├── test_1.mp3
+    │   ├── test_2.mp3
+    │   ├── test_3.wav
+    │   ├── test_4.wav
+    │   ├── test_5.wav
     └── sound_play_pkg
         ├── __init__.py
         ├── __pycache__
-        │   ├── __init__.cpython-310.pyc
-        │   └── sound_play.cpython-310.pyc
         └── sound_play.py
 
 ```
@@ -66,7 +64,7 @@ sudo apt-get install -y alsa-utils ffmpeg
 ## 빌드 & 실행
 
 ```bash
-cd ~/ros2_ws
+cd ~/your_ws
 colcon build --symlink-install --packages-select sound_play_pkg
 source install/setup.bash
 ros2 launch sound_play_pkg sound_play.launch.py
@@ -95,7 +93,7 @@ parameters=[{
   'topic': '/sound_id',
   'play_mode': 'single',
   'file_ids':  [0, 1, 2, 3, 4, 5],
-  'file_names': ['idle.wav', 'start.mp3', 'stop.wav', 'warn.mp3', 'tmp.mp3', 'test_0.mp3'],
+  'file_names': ['test_0.mp3', 'test_1.mp3', 'test_2.mp3', 'test_3.wav', 'test_4.wav', 'test_5.wav'],
 }]
 ```
 
@@ -124,17 +122,6 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 2}"
 
 코어 구현: [`sound_play_pkg/sound_play.py`](sound_play_pkg/sound_play.py) 의 `SoundPlayNode.on_msg()`
 
----
-
-## 확장 아이디어 (미구현)
-
-- `sounds_dir` 파라미터로 외부 경로 지정
-- 재생 상태 퍼블리시(/sound_play/status)
-- 서비스/액션 인터페이스로 동기 재생 제어
-- 동일 ID 무시 타임아웃(stale timeout) 옵션
-- 볼륨 파라미터 (`ffplay -volume`, `amixer` 연계)
-
-요청 시 추가 가능.
 
 ---
 
@@ -153,8 +140,4 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 2}"
 
 Apache License 2.0 (코드), 사운드 파일은 별도 라이선스 확인 필요.
 
----
 
-## 변경 로그 (요약)
-
-- 0.1.0: 기본 기능, 중복 ID 억제, launch 파라미터 기반 매핑.
