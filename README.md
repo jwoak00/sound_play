@@ -133,11 +133,3 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 2}"
 | 매핑 오류 예외 | file_ids / file_names 길이 불일치 | 런치 파라미터 수정 |
 | mp3 재생 실패 | ffplay 없음 | `sudo apt install ffmpeg` |
 | 즉시 종료 | 필수 파라미터 공백 | 런치 파라미터 채우기 |
-
----
-
-## 라이선스
-
-Apache License 2.0 (코드), 사운드 파일은 별도 라이선스 확인 필요.
-
-
