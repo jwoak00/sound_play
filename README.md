@@ -5,7 +5,7 @@
 **요약 (KO)**: `std_msgs/UInt8` ID 값을 받아 미리 매핑된 사운드(WAV/MP3)를 재생하는 ROS 2 패키지. 동일 ID 연속 수신 시 새 ID가 올 때까지 재생 1회만 수행(엣지 트리거). `sounds_dir` 파라미터로 소스 폴더를 직접 지정해 빌드 없이 파일 교체가 가능하며, 재생 모드는 단일(`single`) 또는 중첩(`overlap`)을 지원.
 
 ```bash
-git clone -b feature/sounds_dir https://github.com/jwoak00/sound_play_pkg.git sound_play_pkg_feature
+git clone -b feature/sounds_dir https://github.com/jwoak00/sound_play_pkg.git
 ```
 
 ---
