@@ -72,7 +72,7 @@ sudo apt-get install -y alsa-utils ffmpeg
 
 ```bash
 cd ~/your_ws
-colcon build --symlink-install --packages-select sound_play_pkg
+colcon build --symlink-install --packages-select
 source install/setup.bash
 ros2 launch sound_play_pkg sound_play.launch.py
 ```

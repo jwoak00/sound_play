@@ -11,8 +11,8 @@ def generate_launch_description():
             parameters=[{
                 'topic': '/sound_id',
                 'play_mode': 'single',            # 'single' or 'overlap'
-                'file_ids':  [0, 1, 2, 3, 4, 5],
-                'file_names': ['test_0.mp3', 'test_1.mp3', 'test_2.mp3', 'test_3.mp3', 'test_4.mp3', 'test_5.mp3'],
+                'file_ids':  [0, 1, 2, 3, 4, 5, 6],
+                'file_names': ['test_0.mp3', 'test_1.mp3', 'test_2.mp3', 'test_3.mp3', 'test_4.mp3', 'test_5.mp3', 'test_6.wav'],
                 'sounds_dir': '/home/ok/ros2_ws/src/sound_play_pkg/sound',
             }],
         )

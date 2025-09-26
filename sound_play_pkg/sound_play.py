@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os
 import signal
 import subprocess
 from pathlib import Path
@@ -18,7 +17,6 @@ class SoundPlayNode(Node):
 
         dyn = ParameterDescriptor(dynamic_typing=True)
 
-        # 필수 파라미터 - 모두 YAML/런치에서 제공 필요
         self.declare_parameter('topic', '', dyn)
         self.declare_parameter('play_mode', '', dyn)
         self.declare_parameter('file_ids', [], dyn)
