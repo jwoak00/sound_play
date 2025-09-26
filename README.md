@@ -113,7 +113,7 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 2}"
 
 ## 동작 흐름
 
-1. 노드 시작 시 패키지 share 디렉토리에서 `sound/` 경로 결정
+1. 노드 시작 시 `sound/` 경로 결정
 2. `file_ids` + `file_names` 검증 → 매핑 딕셔너리 생성
 3. 메시지 수신:
    - 이전 ID와 같으면 리턴
