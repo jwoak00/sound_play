@@ -23,6 +23,8 @@ class SoundPlayNode(Node):
         self.declare_parameter('play_mode', '', dyn)
         self.declare_parameter('file_ids', [], dyn)
         self.declare_parameter('file_names', [], dyn)
+        # 선택 파라미터: 사운드 디렉토리 (지정 시 설치 share 대신 사용)
+        self.declare_parameter('sounds_dir', '', dyn)
 
         topic = self.get_parameter('topic').get_parameter_value().string_value
         if not topic:
@@ -34,9 +36,15 @@ class SoundPlayNode(Node):
             self.get_logger().error("Parameter 'play_mode' must be 'single' or 'overlap'")
             raise RuntimeError("invalid or missing play_mode")
 
-        # 설치된 share 경로
-        pkg_share = get_package_share_directory('sound_play_pkg')
-        self.sounds_dir = Path(pkg_share) / 'sound'
+        # 사운드 디렉토리 결정
+        sounds_param = self.get_parameter('sounds_dir').get_parameter_value().string_value
+        if sounds_param:
+            self.sounds_dir = Path(sounds_param).expanduser().resolve()
+        else:
+            pkg_share = get_package_share_directory('sound_play_pkg')
+            self.sounds_dir = Path(pkg_share) / 'sound'
+        if not self.sounds_dir.is_dir():
+            self.get_logger().warn(f"sounds_dir not found: {self.sounds_dir}")
 
         # 매핑 생성 (없거나 오류면 예외)
         self.file_map = self._build_mapping()
