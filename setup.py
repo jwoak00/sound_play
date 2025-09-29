@@ -19,7 +19,7 @@ setup(
     maintainer_email='unknown@example.com',
     description='sound play package',
     license='Apache License 2.0',
-    tests_require=['pytest'],
+    # tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'sound_play = sound_play_pkg.sound_play:main',
