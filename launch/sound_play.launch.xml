@@ -1,10 +1,17 @@
 <?xml version="1.0"?>
 <launch>
   <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
-    <param name="topic" value="/sound_id" />
-    <param name="play_mode" value="single" />
-    <param name="file_ids" value="[0, 1, 2, 3, 4, 5]" type="yaml" />
-    <param name="file_names" value="[test_0.mp3, test_1.mp3, test_2.mp3, test_3.mp3, test_4.mp3, test_5.mp3]" type="yaml" />
     <param name="sounds_dir" value="$(find-pkg-share sound_play_pkg)/sound" />
+    <param name="topics.ldws" value="/tmp/ldws_warning" />
+    <param name="topics.acc" value="/tmp/acc_level" />
+    <param name="topics.system_failure" value="/tmp/system_failure" />
+    <param name="topics.autonomous_mode" value="/tmp/autonomous_mode" />
+    <param name="topics.driver_mode" value="/tmp/driver_mode" />
+    <param name="topics.driving_disable_area" value="/tmp/driving_disable_area" />
+    <param name="topics.lane_change_right" value="/tmp/lane_change_right" />
+    <param name="topics.lane_change_left" value="/tmp/lane_change_left" />
+    <param name="topics.lane_change_finish" value="/tmp/lane_change_finish" />
+    <param name="topics.lane_change_cancel" value="/tmp/lane_change_cancel" />
+    <param name="topics.speed" value="/planning/scenario_planning/max_velocity" />
   </node>
 </launch>

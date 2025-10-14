@@ -9,9 +9,10 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(ament_index_cpp REQUIRED)
+find_package(tier4_planning_msgs REQUIRED)
 
 add_executable(sound_play src/sound_play_node.cpp)
-ament_target_dependencies(sound_play rclcpp std_msgs ament_index_cpp)
+ament_target_dependencies(sound_play rclcpp std_msgs ament_index_cpp tier4_planning_msgs)
 
 target_compile_features(sound_play PUBLIC c_std_99 cxx_std_17)
 
