@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+  <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
+    <param name="topic" value="/sound_id" />
+    <param name="play_mode" value="single" />
+    <param name="file_ids" value="[0, 1, 2, 3, 4, 5]" type="yaml" />
+    <param name="file_names" value="[test_0.mp3, test_1.mp3, test_2.mp3, test_3.mp3, test_4.mp3, test_5.mp3]" type="yaml" />
+    <param name="sounds_dir" value="$(find-pkg-share sound_play_pkg)/sound" />
+  </node>
+</launch>

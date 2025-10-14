@@ -29,8 +29,8 @@
    sound_play_pkg
     ├── CMakeLists.txt
     ├── README.md
-    ├── launch
-    │   └── sound_play.launch.py
+  ├── launch
+  │   └── sound_play.launch.xml
     ├── package.xml
     ├── resource
     │   └── sound_play_pkg
@@ -67,7 +67,7 @@ sudo apt-get install -y alsa-utils ffmpeg
 cd ~/your_ws
 colcon build --symlink-install --packages-select sound_play_pkg
 source install/setup.bash
-ros2 launch sound_play_pkg sound_play.launch.py
+ros2 launch sound_play_pkg sound_play.launch.xml
 ```
 
 로그 예:
@@ -87,15 +87,18 @@ ros2 launch sound_play_pkg sound_play.launch.py
 | `file_names`  | string[]    | 각 ID에 대응되는 파일명 (동일 길이) |
 | `sounds_dir`  | string      | (선택) 사운드 파일이 존재하는 디렉토리 – 지정 시 설치 share/sound 대신 이 경로 사용 |
 
-런치 예시: [`launch/sound_play.launch.py`](launch/sound_play.launch.py)
+런치 예시: [`launch/sound_play.launch.xml`](launch/sound_play.launch.xml)
 
-```python
-parameters=[{
-  'topic': '/sound_id',
-  'play_mode': 'single',
-  'file_ids':  [0, 1, 2, 3, 4, 5],
-  'file_names': ['test_0.mp3', 'test_1.mp3', 'test_2.mp3', 'test_3.wav', 'test_4.wav', 'test_5.wav'],
-}]
+```xml
+<launch>
+  <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
+    <param name="topic" value="/sound_id" />
+    <param name="play_mode" value="single" />
+    <param name="file_ids" value="[0, 1, 2, 3, 4, 5]" yaml="true" />
+  <param name="file_names" value="['test_0.mp3', 'test_1.mp3', 'test_2.mp3', 'test_3.mp3', 'test_4.mp3', 'test_5.mp3']" yaml="true" />
+    <param name="sounds_dir" value="/home/ok/ros2_ws/src/sound_play_pkg/sound" />
+  </node>
+</launch>
 ```
 
 ---
@@ -114,7 +117,7 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 2}"
 ```bash
 cp new.mp3 ~/ros2_ws/src/sound_play_pkg/sound/test_6.mp3
 # launch 파일 file_ids/file_names 에 6, 'test_6.mp3' 추가 후
-ros2 launch sound_play_pkg sound_play.launch.py
+ros2 launch sound_play_pkg sound_play.launch.xml
 ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 6}"
 ```
 
@@ -148,7 +151,7 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 6}"
 
 ### 디버그 팁
 ```bash
-ROS_LOG_LEVEL=DEBUG ros2 launch sound_play_pkg sound_play.launch.py
+ROS_LOG_LEVEL=DEBUG ros2 launch sound_play_pkg sound_play.launch.xml
 ```
 출력되는 매핑/경로 로그를 확인하여 잘못된 파라미터를 빠르게 찾을 수 있습니다.
 
