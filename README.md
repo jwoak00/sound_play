@@ -1,8 +1,8 @@
 # sound_play_pkg
 
-**Short description (EN)**: Simple ROS 2 node that plays local WAV/MP3 files selected by incoming std_msgs/UInt8 IDs. Supports single/overlap playback modes, duplicate-ID edge suppression, and hot‑reloading via a configurable sounds directory.
+**Short description (EN)**: Simple ROS 2 (C++) node that plays local WAV/MP3 files selected by incoming std_msgs/UInt8 IDs. Supports single/overlap playback modes, duplicate-ID edge suppression, and hot‑reloading via a configurable sounds directory.
 
-**요약 (KO)**: `std_msgs/UInt8` ID 값을 받아 미리 매핑된 사운드(WAV/MP3)를 재생하는 ROS 2 패키지. 동일 ID 연속 수신 시 새 ID가 올 때까지 재생 1회만 수행(엣지 트리거). `sounds_dir` 파라미터로 소스 폴더를 직접 지정해 빌드 없이 파일 교체가 가능하며, 재생 모드는 단일(`single`) 또는 중첩(`overlap`)을 지원.
+**요약 (KO)**: `std_msgs/UInt8` ID 값을 받아 미리 매핑된 사운드(WAV/MP3)를 재생하는 ROS 2 C++ 패키지. 동일 ID 연속 수신 시 새 ID가 올 때까지 재생 1회만 수행(엣지 트리거). `sounds_dir` 파라미터로 소스 폴더를 직접 지정해 빌드 없이 파일 교체가 가능하며, 재생 모드는 단일(`single`) 또는 중첩(`overlap`)을 지원.
 
 ---
 
@@ -27,14 +27,13 @@
 
 ```
    sound_play_pkg
+    ├── CMakeLists.txt
     ├── README.md
     ├── launch
     │   └── sound_play.launch.py
     ├── package.xml
     ├── resource
     │   └── sound_play_pkg
-    ├── setup.cfg
-    ├── setup.py
     ├── sound
     │   ├── test_0.mp3
     │   ├── test_1.mp3
@@ -42,10 +41,8 @@
     │   ├── test_3.wav
     │   ├── test_4.wav
     │   ├── test_5.wav
-    └── sound_play_pkg
-        ├── __init__.py
-        ├── __pycache__
-        └── sound_play.py
+    └── src
+        └── sound_play_node.cpp
 
 ```
 
@@ -53,7 +50,7 @@
 
 ## 의존
 
-- ROS 2 (rclpy, std_msgs, launch_ros, ament_index_python)
+- ROS 2 (rclcpp, std_msgs, launch_ros, ament_index_cpp)
 - 시스템 실행파일:
   - `aplay` (alsa-utils)
   - `ffplay` (ffmpeg)
@@ -133,7 +130,7 @@ ros2 topic pub --once /sound_id std_msgs/msg/UInt8 "{data: 6}"
 6. MP3는 `ffplay`, WAV는 `aplay` (그 외 확장자는 `ffplay`) 사용.
 7. 종료 시 (Ctrl+C) 프로세스 정리 후 안전하게 rclpy.shutdown.
 
-코어 구현: [`sound_play_pkg/sound_play.py`](sound_play_pkg/sound_play.py) → `SoundPlayNode.on_msg()` / `_build_mapping()`.
+코어 구현: [`src/sound_play_node.cpp`](src/sound_play_node.cpp) → `SoundPlayNode::on_message()` / `build_mapping()`.
 
 
 ---
