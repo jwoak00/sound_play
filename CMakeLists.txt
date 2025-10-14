@@ -12,14 +12,20 @@ find_package(ament_index_cpp REQUIRED)
 
 add_executable(sound_play src/sound_play_node.cpp)
 ament_target_dependencies(sound_play rclcpp std_msgs ament_index_cpp)
+target_include_directories(sound_play PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
 
 target_compile_features(sound_play PUBLIC c_std_99 cxx_std_17)
 
 install(TARGETS sound_play
   DESTINATION lib/${PROJECT_NAME})
 
-install(DIRECTORY launch sound
+install(DIRECTORY launch sounds
   DESTINATION share/${PROJECT_NAME})
+
+install(DIRECTORY include/
+  DESTINATION include)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/resource")
   install(DIRECTORY resource/

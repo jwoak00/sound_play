@@ -79,24 +79,40 @@ ros2 launch sound_play_pkg sound_play.launch.xml
 
 ## 파라미터 (런치에서 설정)
 
-| 이름          | 타입        | 설명 |
-|---------------|-------------|------|
-| `topic`       | string      | 구독할 UInt8 토픽 |
-| `play_mode`   | string      | `single` 또는 `overlap` |
-| `file_ids`    | int[]       | 사운드 ID 목록 |
-| `file_names`  | string[]    | 각 ID에 대응되는 파일명 (동일 길이) |
-| `sounds_dir`  | string      | (선택) 사운드 파일이 존재하는 디렉토리 – 지정 시 설치 share/sound 대신 이 경로 사용 |
+| 이름 | 타입 | 설명 |
+|------|------|------|
+| `sounds_dir` | string | (선택) 사운드 파일이 존재하는 디렉토리 – 지정 시 설치 share/sound 대신 이 경로 사용 |
+| `sounds.mapping` | str (YAML literal) | 이벤트 키별 재생할 사운드 파일명을 지정 (`warning_beep`, `system_failure`, `driver_mode`, `lane_change_*` 등) – 예: `{warning_beep: beep.wav, driver_mode: driver_mode.wav}` |
+| `topics.ldws` | string | (선택) 차선이탈 경고(`std_msgs/Bool`) 토픽 이름 |
+| `topics.acc` | string | (선택) ACC 단계(`std_msgs/UInt8`) 토픽 |
+| `topics.system_failure` | string | (선택) 시스템 오류(`std_msgs/Bool`) 토픽 |
+| `topics.autonomous_mode` | string | (선택) 자율주행 모드 전환(`std_msgs/Bool`) 토픽 |
+| `topics.driver_mode` | string | (선택) 수동 운전 모드 전환(`std_msgs/Bool`) 토픽 |
+| `topics.driving_disable_area` | string | (선택) 주행 불가 구역 진입(`std_msgs/Bool`) 토픽 |
+| `topics.lane_change_right` | string | (선택) 우측 차선 변경 알림(`std_msgs/Bool`) 토픽 |
+| `topics.lane_change_left` | string | (선택) 좌측 차선 변경 알림(`std_msgs/Bool`) 토픽 |
+| `topics.lane_change_finish` | string | (선택) 차선 변경 완료(`std_msgs/Bool`) 토픽 |
+| `topics.lane_change_cancel` | string | (선택) 차선 변경 취소(`std_msgs/Bool`) 토픽 |
+| `topics.speed` | string | (선택) 최대 속도 제한(`std_msgs/Float32`, 단위 m/s) 토픽 |
 
 런치 예시: [`launch/sound_play.launch.xml`](launch/sound_play.launch.xml)
 
 ```xml
 <launch>
   <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
-    <param name="topic" value="/sound_id" />
-    <param name="play_mode" value="single" />
-    <param name="file_ids" value="[0, 1, 2, 3, 4, 5]" yaml="true" />
-  <param name="file_names" value="['test_0.mp3', 'test_1.mp3', 'test_2.mp3', 'test_3.mp3', 'test_4.mp3', 'test_5.mp3']" yaml="true" />
     <param name="sounds_dir" value="/home/ok/ros2_ws/src/sound_play_pkg/sound" />
+  <param name="sounds.mapping" type="str" value="{warning_beep: beep.wav, system_failure: system_failure.wav, autonomous_mode: autonomous_mode.wav, driver_mode: driver_mode.wav, driving_disable_area: driving_disable_area.mp3, lane_change_right: lane_right.mp3, lane_change_left: lane_left.mp3, lane_change_finish: lane_cancle.mp3, lane_change_cancel: lane_finish.mp3}" />
+    <param name="topics.ldws" value="/tmp/ldws_warning" />
+    <param name="topics.acc" value="/tmp/acc_level" />
+    <param name="topics.system_failure" value="/tmp/system_failure" />
+    <param name="topics.autonomous_mode" value="/tmp/autonomous_mode" />
+    <param name="topics.driver_mode" value="/tmp/driver_mode" />
+    <param name="topics.driving_disable_area" value="/tmp/driving_disable_area" />
+    <param name="topics.lane_change_right" value="/tmp/lane_change_right" />
+    <param name="topics.lane_change_left" value="/tmp/lane_change_left" />
+    <param name="topics.lane_change_finish" value="/tmp/lane_change_finish" />
+    <param name="topics.lane_change_cancel" value="/tmp/lane_change_cancel" />
+    <param name="topics.speed" value="/planning/scenario_planning/max_velocity" />
   </node>
 </launch>
 ```

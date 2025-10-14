@@ -1,7 +1,9 @@
 <?xml version="1.0"?>
 <launch>
   <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
-    <param name="sounds_dir" value="$(find-pkg-share sound_play_pkg)/sound" />
+    <param name="sounds_dir" value="/home/ok/ros2_ws/src/sound_play_pkg/sounds" />
+  <param name="sounds.mapping" type="str" value="{warning_beep: beep.wav, system_failure: beep.wav, autonomous_mode: autonomous_mode.wav, driver_mode: driver_mode.wav, driving_disable_area: driving_disable_area.mp3, lane_change_right: lane_right.mp3, lane_change_left: lane_left.mp3, lane_change_cancel: lane_cancle.mp3, lane_change_finish: lane_finish.mp3}" />
+
     <param name="topics.ldws" value="/tmp/ldws_warning" />
     <param name="topics.acc" value="/tmp/acc_level" />
     <param name="topics.system_failure" value="/tmp/system_failure" />
