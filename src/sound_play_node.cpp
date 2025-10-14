@@ -2,8 +2,8 @@
 #include <rclcpp/rclcpp.hpp>
 #include <rcl_interfaces/msg/parameter_descriptor.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/u_int8.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <algorithm>
 #include <atomic>
@@ -24,8 +24,6 @@
 namespace sound_play_pkg
 {
 namespace fs = std::filesystem;
-
-using tier4_planning_msgs::msg::VelocityLimit;
 
 class SoundPlayNode : public rclcpp::Node
 {
@@ -195,9 +193,9 @@ private:
 
     const auto speed_topic = get_parameter("topics.speed").as_string();
     if (!speed_topic.empty()) {
-      velocity_sub_ = create_subscription<VelocityLimit>(
+      velocity_sub_ = create_subscription<std_msgs::msg::Float32>(
         speed_topic, rclcpp::QoS{10},
-        [this](const VelocityLimit::SharedPtr msg) { handle_velocity(msg); });
+        [this](const std_msgs::msg::Float32::SharedPtr msg) { handle_velocity(msg); });
       RCLCPP_INFO(get_logger(), "Velocity topic: %s", speed_topic.c_str());
     }
   }
@@ -260,9 +258,9 @@ private:
     driving_disable_area_active_ = active;
   }
 
-  void handle_velocity(const VelocityLimit::SharedPtr msg)
+  void handle_velocity(const std_msgs::msg::Float32::SharedPtr msg)
   {
-    const double kmh = msg->max_velocity * 3.6;
+    const double kmh = msg->data * 3.6;
     if (kmh < 0.0) {
       return;
     }
@@ -458,7 +456,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_change_left_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_change_finish_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_change_cancel_sub_;
-  rclcpp::Subscription<VelocityLimit>::SharedPtr velocity_sub_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr velocity_sub_;
 
   std::mutex queue_mutex_;
   std::condition_variable queue_cv_;
