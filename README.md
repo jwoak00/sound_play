@@ -29,8 +29,8 @@
    sound_play_pkg
     ├── CMakeLists.txt
     ├── README.md
-  ├── launch
-  │   └── sound_play.launch.xml
+    ├── launch
+    │   └── sound_play.launch.xml
     ├── package.xml
     ├── resource
     │   └── sound_play_pkg
