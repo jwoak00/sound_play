@@ -27,9 +27,6 @@ install(DIRECTORY launch sounds
 install(DIRECTORY include/
   DESTINATION include)
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/resource")
-  install(DIRECTORY resource/
-    DESTINATION share/${PROJECT_NAME}/resource)
-endif()
+
 
 ament_package()

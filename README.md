@@ -458,9 +458,6 @@ ffplay -nodisp -autoexit ~/ros2_ws/src/sound_play_pkg/sounds/driving_disable_are
 
 ---
 
-## 기여
-
-버그 리포트, 기능 요청, Pull Request를 환영합니다.
 
 **Repository**: https://github.com/jwoak00/sound_play_pkg  
 **Branch**: v2.0
@@ -476,6 +473,6 @@ ffplay -nodisp -autoexit ~/ros2_ws/src/sound_play_pkg/sounds/driving_disable_are
 
 ---
 
-**작성일**: 2025-01-14  
+**작성일**: 2025-10-14  
 **버전**: 2.0  
 **ROS 2 배포판**: Humble Hawksbill
