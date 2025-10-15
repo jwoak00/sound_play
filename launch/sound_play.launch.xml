@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
-    <param name="sounds_dir" value="/home/ok/ros2_ws/src/sound_play_pkg/sounds" />
+    <param name="sounds_dir" value="/home/jungwoo/skyautonet_ws/src/sound_play_pkg/sounds" />
   <param name="sounds.mapping" type="str" value="{
   warning_beep: beep.wav, 
   system_failure: beep.wav, 
@@ -25,5 +25,6 @@
     <param name="topics.lane_change_finish" value="/tmp/lane_change_finish" />
     <param name="topics.lane_change_cancel" value="/tmp/lane_change_cancel" />
     <param name="topics.speed" value="/planning/scenario_planning/max_velocity" />
+    <param name="speed.debounce_ms" value="2000" />
   </node>
 </launch>

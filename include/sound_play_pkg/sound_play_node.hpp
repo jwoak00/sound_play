@@ -38,8 +38,10 @@ private:
 
   void enqueue_file(const std::string & file_name);
   void enqueue_sound(const std::string & key);
-  std::filesystem::path resolve_sound_path(const std::string & key) const;
-  std::string get_sound_file(const std::string & key) const;
+  
+  // 속도 음원 전용 큐 관리
+  void enqueue_speed_sound(int speed_step);
+  void speed_debounce_worker();
 
   void queue_worker();
   bool wait_for_priority_clear();
@@ -47,8 +49,6 @@ private:
   void update_warning_state();
 
   void play_blocking(const std::filesystem::path & file_path, bool log_info = true);
-  std::vector<std::string> build_command(const std::filesystem::path & file_path);
-  pid_t launch_process(const std::vector<std::string> & command);
 
   static std::map<std::string, std::string> default_sound_map();
 
@@ -91,6 +91,16 @@ private:
   bool autonomous_mode_active_{false};
   bool driving_disable_area_active_{false};
   std::atomic<int> last_speed_step_{0};
+
+  // 속도 음원 디바운싱용
+  std::mutex speed_mutex_;
+  std::condition_variable speed_cv_;
+  std::thread speed_thread_;
+  std::atomic<bool> speed_thread_running_{true};
+  std::atomic<int> pending_speed_step_{-1};  // -1 = 대기 중인 속도 없음
+  std::atomic<bool> speed_changed_{false};
+
+  std::atomic<int> debounce_ms_{300};
 };
 
 }  // namespace sound_play_pkg

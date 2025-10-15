@@ -1,6 +1,6 @@
 # sound_play_pkg
 
-ROS 2 기반 자율주행 차량용 오디오 피드백 시스템으로, 다양한 차량 이벤트(차선 이탈 경고, ACC, 모드 전환, 차선 변경 등)에 대응하여 사운드를 재생합니다. 우선순위 기반 재생 큐, 반복 경고음, 속도 변화 알림 등을 지원하며, 런타임에 파라미터로 사운드 매핑을 유연하게 구성할 수 있습니다.
+ROS 2 기반 자율주행 차량용 오디오 피드백 시스템으로, 다양한 차량 이벤트(차선 이탈 경고, ACC, 모드 전환, 차선 변경 등)에 대응하여 사운드를 재생합니다. 우선순위 기반 재생 큐, 반복 경고음, **디바운싱 기능이 추가된 속도 변화 알림** 등을 지원하며, 런타임에 파라미터로 사운드 매핑을 유연하게 구성할 수 있습니다.
 
 ---
 
@@ -10,7 +10,10 @@ ROS 2 기반 자율주행 차량용 오디오 피드백 시스템으로, 다양�
 - **노드 이름**: `sound_play` (클래스: `SoundPlayNode`)
 - **언어**: C++17, ROS 2 Humble
 - **헤더 분리**: 재사용 가능한 공개 헤더 (`include/sound_play_pkg/sound_play_node.hpp`)
-- **멀티스레드**: 재생 큐 워커 스레드 + 우선순위 경고음 전용 스레드
+- **멀티스레드**: 3개의 독립 워커 스레드
+  - 재생 큐 워커 (일반 사운드)
+  - 우선순위 경고음 워커 (LDWS/ACC)
+  - 속도 디바운싱 워커 (속도 변화 안정화)
 
 ### 지원 기능
 - **이벤트 기반 재생**: 10가지 차량 이벤트에 대한 개별 토픽 구독
@@ -31,6 +34,13 @@ ROS 2 기반 자율주행 차량용 오디오 피드백 시스템으로, 다양�
     - Level 3+: 200ms
     - LDWS only: 500ms
 
+- **🆕 속도 변화 디바운싱** (v2.0 신규)
+  - 빠른 연속 속도 변경 시 마지막 값만 재생
+  - 타이머 리셋 방식: 새 입력마다 대기 시간 재시작
+  - 기본 300ms 안정화 시간 (파라미터로 조정 가능)
+  - 증가/감소 모두 재생 (이전 버전은 증가만 재생)
+  - 메모리 순서 보장으로 스레드 안전성 확보
+
 - **유연한 사운드 매핑**
   - 런치 파라미터로 이벤트 키와 파일명 매핑 (`sounds.mapping`)
   - YAML-like 문자열 파싱 지원: `{key: filename, key2: filename2, ...}`
@@ -40,13 +50,14 @@ ROS 2 기반 자율주행 차량용 오디오 피드백 시스템으로, 다양�
 - **핫 리로딩**
   - `sounds_dir` 파라미터로 사운드 파일 경로 직접 지정
   - 파일 추가/변경 시 노드 재시작만으로 반영 (빌드 불필요)
-  - 미지정 시 자동으로 패키지 설치 경로 사용
+  - 미지정 시 자동으로 패키지 설치 경로의 `sounds` 디렉토리 사용
 
-- **재생 엔진**
-  - **WAV**: `aplay` (ALSA) - 낮은 지연시간
+- **강화된 재생 엔진**
+  - **WAV/OGG**: `aplay` (ALSA) - 낮은 지연시간
   - **MP3**: `ffplay` (FFmpeg) - 압축 파일 지원
   - 동기식 재생으로 프로세스 완료 보장
   - fork/exec 기반 독립 프로세스 실행
+  - **🆕 에러 처리 강화**: fork 실패, 프로세스 종료 코드, 시그널 처리
 
 ---
 
@@ -158,6 +169,7 @@ ROS_LOG_LEVEL=DEBUG ros2 launch sound_play_pkg sound_play.launch.xml
 |---------|------|--------|------|
 | `sounds_dir` | string | (패키지 share/sounds) | 사운드 파일 디렉토리 절대 경로 |
 | `sounds.mapping` | string | (기본 매핑) | 이벤트 키→파일명 매핑 (YAML 형식) |
+| **`speed.debounce_ms`** | int | **300** | **속도 변화 디바운싱 시간 (밀리초)** 🆕 |
 | `topics.ldws` | string | "" | LDWS 경고 토픽 (`std_msgs/Bool`) |
 | `topics.acc` | string | "" | ACC 레벨 토픽 (`std_msgs/UInt8`, 0~3) |
 | `topics.system_failure` | string | "" | 시스템 오류 토픽 (`std_msgs/Bool`) |
@@ -175,16 +187,36 @@ ROS_LOG_LEVEL=DEBUG ros2 launch sound_play_pkg sound_play.launch.xml
 ```cpp
 {
   "warning_beep": "beep.wav",
-  "system_failure": "beep.wav",
+  "system_failure": "system_failure.wav",
   "autonomous_mode": "autonomous_mode.wav",
   "driver_mode": "driver_mode.wav",
   "driving_disable_area": "driving_disable_area.mp3",
   "lane_change_right": "lane_right.mp3",
   "lane_change_left": "lane_left.mp3",
-  "lane_change_finish": "lane_finish.mp3",
-  "lane_change_cancel": "lane_cancle.mp3"
+  "lane_change_finish": "lane_cancle.mp3",
+  "lane_change_cancel": "lane_finish.mp3"
 }
 ```
+
+### 🆕 속도 디바운싱 동작 원리
+
+속도 변경 버튼을 빠르게 여러 번 누를 때의 동작:
+
+```
+시간축:  0ms    50ms   100ms  150ms  200ms  250ms  300ms  350ms  400ms  450ms
+입력:    60km/h  65km/h  70km/h                                            75km/h
+         ↓       ↓       ↓                                                ↓
+처리:    대기시작  리셋    리셋                      재생!                  대기시작
+         (300ms) (300ms) (300ms)                   (70.mp3)              (300ms)
+                                                    ↑
+                                    안정화 완료 (마지막 입력 후 300ms 경과)
+```
+
+**동작 흐름**:
+1. 첫 속도 입력 → 300ms 타이머 시작
+2. 300ms 이내에 새 입력 → 타이머 리셋 + 새 값 저장
+3. 300ms 동안 추가 입력 없음 → 최종 값의 음원 재생
+4. **증가/감소 모두 재생** (60→65 ✅, 65→60 ✅)
 
 ### 런치 파일 예시
 
@@ -198,7 +230,10 @@ ROS_LOG_LEVEL=DEBUG ros2 launch sound_play_pkg sound_play.launch.xml
     <param name="sounds_dir" value="/home/ok/ros2_ws/src/sound_play_pkg/sounds" />
     
     <!-- 사운드 매핑 (YAML 형식 문자열) -->
-    <param name="sounds.mapping" type="str" value="{warning_beep: beep.wav, system_failure: beep.wav, autonomous_mode: autonomous_mode.wav, driver_mode: driver_mode.wav, driving_disable_area: driving_disable_area.mp3, lane_change_right: lane_right.mp3, lane_change_left: lane_left.mp3, lane_change_cancel: lane_cancle.mp3, lane_change_finish: lane_finish.mp3}" />
+    <param name="sounds.mapping" type="str" value="{warning_beep: beep.wav, system_failure: system_failure.wav, autonomous_mode: autonomous_mode.wav, driver_mode: driver_mode.wav, driving_disable_area: driving_disable_area.mp3, lane_change_right: lane_right.mp3, lane_change_left: lane_left.mp3, lane_change_cancel: lane_finish.mp3, lane_change_finish: lane_cancle.mp3}" />
+
+    <!-- 속도 변화 디바운싱 시간 (밀리초) -->
+    <param name="speed.debounce_ms" value="300" />
 
     <!-- 토픽 구독 설정 -->
     <param name="topics.ldws" value="/tmp/ldws_warning" />
@@ -249,6 +284,28 @@ ros2 topic pub --once /tmp/lane_change_right std_msgs/msg/Bool "{data: true}"
 ros2 topic pub --once /planning/scenario_planning/max_velocity std_msgs/msg/Float32 "{data: 16.67}"
 ```
 
+#### 🆕 빠른 연속 속도 변경 테스트 (디바운싱 확인)
+```bash
+# 빠르게 3번 실행 (0.5초 이내)
+ros2 topic pub --once /planning/scenario_planning/max_velocity std_msgs/msg/Float32 "{data: 16.67}"  # 60km/h
+ros2 topic pub --once /planning/scenario_planning/max_velocity std_msgs/msg/Float32 "{data: 18.06}"  # 65km/h
+ros2 topic pub --once /planning/scenario_planning/max_velocity std_msgs/msg/Float32 "{data: 19.44}"  # 70km/h
+
+# 결과: "70.mp3"만 재생됨 (마지막 값)
+```
+
+#### 속도 감소 테스트
+```bash
+# 속도 증가
+ros2 topic pub --once /planning/scenario_planning/max_velocity std_msgs/msg/Float32 "{data: 19.44}"  # 70km/h
+sleep 1
+
+# 속도 감소 (이제 재생됨!)
+ros2 topic pub --once /planning/scenario_planning/max_velocity std_msgs/msg/Float32 "{data: 16.67}"  # 60km/h
+
+# 결과: "70.mp3" → (1초 후) → "60.mp3" 재생 ✅
+```
+
 ### 사운드 파일 추가 (핫 리로딩)
 
 새로운 사운드 파일을 추가하고 즉시 사용할 수 있습니다:
@@ -270,7 +327,7 @@ ros2 launch sound_play_pkg sound_play.launch.xml
 
 ### 스레드 구조
 
-노드는 3개의 주요 스레드로 동작합니다:
+노드는 4개의 주요 스레드로 동작합니다:
 
 1. **메인 스레드** (`rclcpp::spin`)
    - ROS 2 콜백 처리
@@ -287,8 +344,15 @@ ros2 launch sound_play_pkg sound_play.launch.xml
    - 레벨별 간격으로 반복 재생
    - 우선순위 플래그로 일반 재생 블록
 
+4. **🆕 속도 디바운싱 워커** (`speed_debounce_worker`)
+   - 속도 변화 이벤트 안정화
+   - 타이머 리셋 방식 디바운싱
+   - 최종 안정화된 값만 재생 큐에 추가
+   - 메모리 순서 보장으로 스레드 안전성 확보
+
 ### 재생 흐름
 
+#### 일반 사운드 재생
 ```
 Event Topic → handle_*() → enqueue_sound() → sound_map_ lookup
                                                      ↓
@@ -300,7 +364,26 @@ queue_worker() → wait_for_priority_clear() → play_blocking()
                                                      ↓
                                         fork() + execvp(aplay/ffplay)
                                                      ↓
-                                              waitpid() (블로킹)
+                                    waitpid() + 에러 처리 (블로킹)
+```
+
+#### 🆕 속도 변화 재생 (디바운싱)
+```
+Speed Topic (Float32) → handle_velocity() → km/h 변환
+                                                  ↓
+                                        5km/h 단위 정규화
+                                                  ↓
+                                  enqueue_speed_sound() (증가/감소 모두)
+                                                  ↓
+                                    pending_speed_step_ 저장
+                                                  ↓
+                      speed_debounce_worker() ← 타이머 리셋 방식 대기
+                                                  ↓
+                                    300ms 안정화 완료
+                                                  ↓
+                                        enqueue_file()
+                                                  ↓
+                                      playback_queue_
 ```
 
 ### 우선순위 메커니즘
@@ -338,6 +421,10 @@ key1=value1, key2=value2
 | 노드 즉시 종료 | 파라미터 오류 | 로그에서 에러 메시지 확인 |
 | MP3 재생 실패 | ffmpeg 미설치 | `sudo apt install ffmpeg` |
 | WAV 재생 실패 | alsa 미설치/설정 | `aplay -l` 로 장치 확인 |
+| **모든 속도 음원 재생됨** | **디바운싱 시간 부족** | **`speed.debounce_ms` 증가 (예: 500)** 🆕 |
+| **속도 음원 재생 안 됨** | **디바운싱 시간 과다** | **`speed.debounce_ms` 감소 (예: 100)** 🆕 |
+| "fork() failed" 에러 | 시스템 리소스 부족 | 실행 중인 프로세스 확인, 재부팅 |
+| "Audio process exited with code X" | 오디오 파일 손상/형식 오류 | 파일 재생 테스트 (`aplay`/`ffplay`로 직접) |
 
 ### 디버깅 방법
 
@@ -387,19 +474,27 @@ ffplay -nodisp -autoexit ~/ros2_ws/src/sound_play_pkg/sounds/driving_disable_are
 ## 성능 고려사항
 
 ### 지연시간
-- **WAV (aplay)**: ~10-50ms 시작 지연
+- **WAV/OGG (aplay)**: ~10-50ms 시작 지연
 - **MP3 (ffplay)**: ~100-200ms 디코딩 + 시작 지연
 - **Fork/exec 오버헤드**: ~5-10ms
+- **🆕 디바운싱 지연**: 300ms (기본값, 조정 가능)
 
 ### 리소스 사용
-- **메모리**: ~10-20MB (노드 + 스레드)
+- **메모리**: ~15-25MB (노드 + 4개 스레드)
 - **CPU**: 재생 중 각 프로세스당 ~1-5%
 - **디스크**: 사운드 파일 크기에 따라 가변
 
 ### 동시 재생 제한
 - 일반 사운드: 순차 재생 (큐 기반)
 - 경고음: 독립 스레드로 즉시 재생
+- 속도 음원: 디바운싱 후 일반 큐에 추가
 - 시스템 리소스에 따라 동시 프로세스 수 제한 가능
+
+### 🆕 스레드 안전성 (v2.0)
+- **Atomic 변수**: `std::memory_order_acquire/release`로 메모리 순서 보장
+- **Mutex 보호**: 큐 접근 시 데드락 방지
+- **Condition Variable**: 효율적인 스레드 대기/알림
+- **우아한 종료**: 모든 스레드 정리 보장
 
 ---
 
@@ -418,6 +513,29 @@ ffplay -nodisp -autoexit ~/ros2_ws/src/sound_play_pkg/sounds/driving_disable_are
 ### 권한 관리
 - 오디오 장치 접근 권한 필요 (`audio` 그룹)
 - 사운드 파일 읽기 권한 확인
+
+---
+
+## 버전 히스토리
+
+### v2.0 (2025-10-15) - 현재 버전 🆕
+- ✨ **속도 변화 디바운싱 추가**: 빠른 연속 입력 시 마지막 값만 재생
+- ✨ **증가/감소 모두 재생**: 이전 버전은 증가만 재생
+- ✨ **타이머 리셋 방식**: 새 입력마다 대기 시간 재시작
+- 🔧 **에러 처리 강화**: fork 실패, waitpid 에러, 프로세스 종료 코드 감지
+- 🔧 **스레드 안전성 개선**: 메모리 순서 보장 (memory_order_acquire/release)
+- 🔧 **OGG 파일 지원**: aplay로 재생 가능
+- 🔧 **매직 넘버 제거**: MIN_SPEED_KMH, MAX_SPEED_KMH, SPEED_STEP_KMH 상수화
+- 📝 **코드 최적화**: 불필요한 함수 제거, 헤더 정리
+- 📝 **파라미터 추가**: `speed.debounce_ms` (기본 300ms)
+- 📝 **sounds 디렉토리 경로 수정**: `share/sound` → `share/sounds`
+
+### v1.0 (2025-10-14)
+- 초기 릴리스
+- 기본 이벤트 재생 기능
+- 우선순위 재생 시스템
+- LDWS/ACC 경고음
+- 속도 제한 알림 (증가만)
 
 ---
 
@@ -450,6 +568,11 @@ ffplay -nodisp -autoexit ~/ros2_ws/src/sound_play_pkg/sounds/driving_disable_are
    - 오류 카운터/진단 정보
    - 성능 메트릭 수집
 
+6. **🆕 디바운싱 개선**
+   - 속도별 다른 디바운싱 시간
+   - 적응형 디바운싱 (입력 패턴 학습)
+   - 디바운싱 통계 로깅
+
 ---
 
 ## 라이선스
@@ -473,6 +596,35 @@ ffplay -nodisp -autoexit ~/ros2_ws/src/sound_play_pkg/sounds/driving_disable_are
 
 ---
 
-**작성일**: 2025-10-14  
+## 🔗 관련 링크
+
+- **Repository**: https://github.com/jwoak00/sound_play_pkg
+- **Branch**: v2.0 (현재)
+- **Issues**: https://github.com/jwoak00/sound_play_pkg/issues
+
+---
+
+## 📋 체크리스트 (개발자용)
+
+### 새 기능 추가 시
+- [ ] 파라미터 추가 (생성자 + README)
+- [ ] 토픽 구독 추가 (init_subscriptions)
+- [ ] 사운드 매핑 추가 (default_sound_map)
+- [ ] 런치 파일 업데이트
+- [ ] README 사용 예시 추가
+- [ ] 컴파일 테스트
+- [ ] 실제 하드웨어 테스트
+
+### 코드 수정 시
+- [ ] 스레드 안전성 확인 (mutex, atomic)
+- [ ] 메모리 누수 확인 (valgrind)
+- [ ] 에러 처리 추가
+- [ ] 로그 레벨 적절히 설정
+- [ ] 주석 업데이트
+
+---
+
+**최종 업데이트**: 2025-10-15  
 **버전**: 2.0  
-**ROS 2 배포판**: Humble Hawksbill
+**ROS 2 배포판**: Humble Hawksbill  
+**메인테이너**: jwoak00
