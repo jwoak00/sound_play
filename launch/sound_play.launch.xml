@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
   <node pkg="sound_play_pkg" exec="sound_play" name="sound_play" output="screen">
-    <param name="sounds_dir" value="/home/ok/ros2_ws/src/sound_play_pkg/sounds" />
+    <param name="sounds_dir" value="/home/ok/fodro_v1/ros/src/skyautonet/utils/sound_play_pkg/sounds" />
   <param name="sounds.mapping" type="str" value="{
   warning_beep: beep.wav, 
   system_failure: beep.wav, 
@@ -10,7 +10,7 @@
   driving_disable_area: driving_disable_area.mp3, 
   lane_change_right: lane_right.mp3, 
   lane_change_left: lane_left.mp3, 
-  lane_change_cancel: lane_cancle.mp3, 
+  lane_change_cancel: lane_cancel.mp3, 
   lane_change_finish: lane_finish.mp3
   }" />
 
@@ -26,5 +26,6 @@
     <param name="topics.lane_change_cancel" value="/tmp/lane_change_cancel" />
     <param name="topics.speed" value="/planning/scenario_planning/max_velocity" />
     <param name="speed.debounce_ms" value="2000" />
+    <param name="acc.timeout_sec" value="1.0" />
   </node>
 </launch>

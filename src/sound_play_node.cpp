@@ -170,7 +170,8 @@ SoundPlayNode::SoundPlayNode()
   declare_parameter<std::string>("topics.lane_change_cancel", "", dyn_desc);
   declare_parameter<std::string>("topics.speed", "/planning/scenario_planning/max_velocity", dyn_desc);
   declare_parameter<std::string>("sounds.mapping", "", dyn_desc);
-  declare_parameter<int>("speed.debounce_ms", 300, dyn_desc); 
+  declare_parameter<int>("speed.debounce_ms", 300, dyn_desc);
+  declare_parameter<double>("acc.timeout_sec", 3.0, dyn_desc); 
 
   sound_map_ = default_sound_map();
 
@@ -214,6 +215,8 @@ SoundPlayNode::SoundPlayNode()
 
   // debounce_ms atomic 변수 초기화
   debounce_ms_.store(get_parameter("speed.debounce_ms").as_int());
+  acc_timeout_sec_.store(get_parameter("acc.timeout_sec").as_double());
+  last_acc_time_ = now();  // 초기화
 
   queue_thread_ = std::thread(&SoundPlayNode::queue_worker, this);
   warning_thread_ = std::thread(&SoundPlayNode::warning_worker, this);
@@ -365,6 +368,13 @@ void SoundPlayNode::handle_acc(uint8_t level)
 {
   const uint8_t clamped = std::min<uint8_t>(static_cast<uint8_t>(3), level);
   const uint8_t previous = acc_level_.exchange(clamped);
+  
+  // 타임스탬프 갱신
+  {
+    std::lock_guard<std::mutex> lock(acc_timeout_mutex_);
+    last_acc_time_ = now();
+  }
+  
   if (previous != clamped) {
     RCLCPP_INFO(get_logger(), "ACC level: %u", clamped);
   }
@@ -412,7 +422,7 @@ void SoundPlayNode::handle_driving_disable_area(bool active)
 
 void SoundPlayNode::handle_velocity(const tier4_planning_msgs::msg::VelocityLimit::SharedPtr msg)
 {
-  const double kmh = msg->max_velocity * 3.6;
+  const double kmh = msg->max_velocity * 3.6 + 0.01;
   if (kmh < 0.0) {
     return;
   }
@@ -567,6 +577,23 @@ void SoundPlayNode::warning_worker()
     }
 
     while (warning_thread_running_ && warning_active_.load()) {
+      // ACC 타임아웃 체크 (ACC 활성 상태에서만)
+      if (acc_level_.load() > 0) {
+        bool timed_out = false;
+        {
+          std::lock_guard<std::mutex> timeout_lock(acc_timeout_mutex_);
+          const auto elapsed = (now() - last_acc_time_).seconds();
+          timed_out = (elapsed > acc_timeout_sec_.load());
+        }
+        
+        if (timed_out) {
+          RCLCPP_INFO(get_logger(), "ACC timeout - stopping warning");
+          acc_level_.store(0);
+          update_warning_state();
+          continue;  // 상태 재평가
+        }
+      }
+
       const auto it = sound_map_.find("warning_beep");
       if (it == sound_map_.end()) {
         RCLCPP_WARN_THROTTLE(

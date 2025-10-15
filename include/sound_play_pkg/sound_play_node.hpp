@@ -88,6 +88,11 @@ private:
   std::atomic<bool> ldws_active_{false};
   std::atomic<uint8_t> acc_level_{0};
 
+  // ACC 타임아웃 관리용
+  std::mutex acc_timeout_mutex_;
+  rclcpp::Time last_acc_time_;
+  std::atomic<double> acc_timeout_sec_{3.0};  // 기본 3초
+
   bool driver_mode_active_{false};
   bool autonomous_mode_active_{false};
   bool driving_disable_area_active_{false};
