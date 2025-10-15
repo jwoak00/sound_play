@@ -346,9 +346,9 @@ void SoundPlayNode::init_subscriptions()
 
   const auto speed_topic = get_parameter("topics.speed").as_string();
   if (!speed_topic.empty()) {
-    velocity_sub_ = create_subscription<std_msgs::msg::Float32>(
+    velocity_sub_ = create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
       speed_topic, rclcpp::QoS{10},
-      [this](const std_msgs::msg::Float32::SharedPtr msg) { handle_velocity(msg); });
+      [this](const tier4_planning_msgs::msg::VelocityLimit::SharedPtr msg) { handle_velocity(msg); });
   }
 }
 
@@ -410,9 +410,9 @@ void SoundPlayNode::handle_driving_disable_area(bool active)
   driving_disable_area_active_ = active;
 }
 
-void SoundPlayNode::handle_velocity(const std_msgs::msg::Float32::SharedPtr msg)
+void SoundPlayNode::handle_velocity(const tier4_planning_msgs::msg::VelocityLimit::SharedPtr msg)
 {
-  const double kmh = msg->data * 3.6;
+  const double kmh = msg->max_velocity * 3.6;
   if (kmh < 0.0) {
     return;
   }

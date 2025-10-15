@@ -5,6 +5,7 @@
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float32.hpp>
 #include <std_msgs/msg/u_int8.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <atomic>
 #include <condition_variable>
@@ -34,7 +35,7 @@ private:
   void handle_driver_mode(bool active);
   void handle_autonomous_mode(bool active);
   void handle_driving_disable_area(bool active);
-  void handle_velocity(const std_msgs::msg::Float32::SharedPtr msg);
+  void handle_velocity(const tier4_planning_msgs::msg::VelocityLimit::SharedPtr msg);
 
   void enqueue_file(const std::string & file_name);
   void enqueue_sound(const std::string & key);
@@ -65,7 +66,7 @@ private:
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_change_left_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_change_finish_sub_;
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr lane_change_cancel_sub_;
-  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr velocity_sub_;
+  rclcpp::Subscription<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr velocity_sub_;
 
   std::mutex queue_mutex_;
   std::condition_variable queue_cv_;
